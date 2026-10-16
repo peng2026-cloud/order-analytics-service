@@ -1,0 +1,22 @@
+{
+  "name": "cst8915-order-analytics-service",
+  "version": "1.0.0",
+  "description": "Order Analytics Service for the Algonquin Pet Store",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "amqplib": "^2.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
