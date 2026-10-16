@@ -1,5 +1,5 @@
 {
-  "name": "cst8915-order-analytics-service",
+  "name": "cst8915-midterm-project-order-analytics-service",
   "version": "1.0.0",
   "description": "Order Analytics Service for the Algonquin Pet Store",
   "main": "index.js",
