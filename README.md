@@ -225,9 +225,7 @@ git clone https://github.com/peng2026-cloud/store-front.git
 cd store-front
 ```
 
-Point the store-front at the local APIs (macOS or Linux: `printf 'VUE_APP_ORDER_SERVICE_URL=http://localhost:3000
-VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030
-' > .env`):
+Point the store-front at the local APIs (macOS or Linux: `printf 'VUE_APP_ORDER_SERVICE_URL=http://localhost:3000\nVUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030\n' > .env`):
 
 ```bash
 "VUE_APP_ORDER_SERVICE_URL=http://localhost:3000", "VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030" | Set-Content .env
