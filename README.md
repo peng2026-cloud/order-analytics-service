@@ -6,7 +6,11 @@ CST8915 Midterm Project: extends the Algonquin Pet Store with a service that con
 
 YouTube (unlisted): _link to be added after recording_
 
-## Endpoints
+## 1. Overview: language choice and architecture decisions
+
+**Language:** Node.js with Express, the same stack as `order-service`. App Service has a built-in Node runtime, so the service deploys from GitHub without extra setup.
+
+### Endpoints
 
 | Method | Endpoint | Returns |
 | --- | --- | --- |
@@ -16,7 +20,12 @@ YouTube (unlisted): _link to be added after recording_
 | GET | `/analytics/products` | Order count and revenue per product |
 | GET | `/analytics/top-products` | Top 3 products by quantity sold |
 
-## 12-Factor App (I to IV)
+### Architecture decisions
+
+- **Separate service:** the analytics service only consumes `order_queue`, so `order-service` needed no code change.
+- **In-memory storage:** orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
+
+### 12-Factor App (I to IV)
 
 | Factor | How |
 | --- | --- |
@@ -25,7 +34,7 @@ YouTube (unlisted): _link to be added after recording_
 | III. Config | `RABBITMQ_CONNECTION_STRING` and `PORT` come from environment variables (`.env` locally, App settings on Azure); `.env.example` documents them |
 | IV. Backing services | RabbitMQ is attached through the connection string only: Docker on localhost or the Azure VM, with no code change |
 
-## RabbitMQ consumer pattern
+## 2. RabbitMQ consumer pattern and why
 
 **Choice:** a push consumer. RabbitMQ sends each order to the service as soon as it arrives.
 
@@ -79,9 +88,7 @@ channel.nack(msg, false, false);
 
 A message that is not valid JSON, or has no product name or numeric quantity, is rejected without requeue, so it cannot be redelivered again and again. It is discarded, because no dead-letter queue is configured.
 
-Orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
-
-## Run locally
+## 3. Local demo
 
 Commands are for Windows PowerShell; each service runs in its own terminal tab. Prerequisites: Docker Desktop, Git, Node.js 20+ and Python 3.12. On macOS or Linux, use the two alternatives noted below.
 
@@ -94,7 +101,7 @@ This service needs no `.env` file locally, because both of its settings have loc
 
 Clone all four repositories into the same folder, and open each new terminal tab in that folder.
 
-### 1. RabbitMQ (Docker)
+### Step 1: RabbitMQ (Docker)
 
 First time (creates the container; port 5672 for AMQP, 15672 for the management page):
 
@@ -110,7 +117,7 @@ docker start rabbitmq
 
 Management page: http://localhost:15672 (user `guest`, password `guest`).
 
-### 2. product-service (port 3030)
+### Step 2: product-service (port 3030)
 
 ```bash
 git clone https://github.com/peng2026-cloud/product-service.git
@@ -138,7 +145,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### 3. order-service (port 3000)
+### Step 3: order-service (port 3000)
 
 In a new terminal tab:
 
@@ -160,7 +167,7 @@ node index.js
 
 It uses `amqp://localhost` by default.
 
-### 4. order-analytics-service (port 4000)
+### Step 4: order-analytics-service (port 4000)
 
 In a new terminal tab:
 
@@ -182,7 +189,7 @@ npm start
 
 It uses `amqp://localhost` and port 4000 by default, and prints `Waiting for orders in order_queue` once it is connected.
 
-### 5. store-front (port 8080)
+### Step 5: store-front (port 8080)
 
 In a new terminal tab:
 
@@ -208,7 +215,7 @@ npm install
 npm run serve
 ```
 
-### 6. Test
+### Step 6: Test
 
 1. Open http://localhost:8080 and place a few orders.
 2. Check the analytics:
@@ -223,7 +230,7 @@ npm run serve
 docker stop rabbitmq
 ```
 
-### Local test screenshots
+### Local demo screenshots
 
 product-service on port 3030:
 
@@ -245,7 +252,7 @@ An order placed in the local store-front:
 
 ![order placed locally](docs/screenshots/local-order-placed.jpg)
 
-## Azure deployment
+## 4. Azure demo
 
 | Component | Azure service | Region |
 | --- | --- | --- |
@@ -260,7 +267,7 @@ An order placed in the local store-front:
 - The VM's NSG allows port 5672 only from the App Services' possible outbound IP addresses.
 - `store-front` builds with GitHub Actions; the workflow sets `VUE_APP_ORDER_SERVICE_URL` and `VUE_APP_PRODUCT_SERVICE_URL` to the App Service URLs.
 
-### Azure screenshots
+### Azure demo screenshots
 
 The resource group with the RabbitMQ VM, the three App Services and the Static Web App:
 
@@ -282,7 +289,7 @@ Analytics on Azure after two orders (Cat Food x 2, Dog Food x 1):
 
 ![top products on Azure](docs/screenshots/azure-top-products.jpg)
 
-## Architecture
+## 5. Architecture diagram
 
 ![Architecture diagram](docs/architecture.png)
 
