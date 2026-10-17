@@ -20,7 +20,13 @@ YouTube (unlisted): _link to be added after recording_
 
 **Architecture decisions:**
 
-- In-memory storage. As the project requirements say: "Use one application instance and one consumer process when using in-memory storage so all orders and analytics are held in the same process." The data resets after a restart.
+**In-memory storage:** this service keeps orders in memory. The project requirements (Storage and Restart Expectations) say:
+
+> **In-memory storage is acceptable.** When using in-memory storage, `/orders` and the analytics endpoints cover orders processed since the service last started, and their data resets after a restart. Persistence across restarts is not required.
+>
+> Use **one application instance and one consumer process** when using in-memory storage so all orders and analytics are held in the same process. Once messages are acknowledged, they are removed from RabbitMQ and cannot be replayed from the queue to rebuild lost in-memory data.
+
+So I run one instance of this service with one consumer.
 
 **12-Factor App Compliance:**
 
