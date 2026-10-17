@@ -4,7 +4,7 @@ CST8915 Midterm Project: a new service for the Algonquin Pet Store that consumes
 
 ## Demo video
 
-YouTube (unlisted): _link to be added after recording_
+YouTube (unlisted): https://youtu.be/iY3WIJsOV0E
 
 ## 1. A brief overview of your order-analytics-service (language choice, architecture decisions)
 
