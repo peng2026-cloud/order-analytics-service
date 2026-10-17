@@ -79,7 +79,13 @@ Each service deploys from its GitHub repository with GitHub Actions. `RABBITMQ_C
 
 ![Azure resource group](docs/screenshots/azure-resource-group.jpg)
 
-Orders placed at https://orange-meadow-0c22c891e.1.azurestaticapps.net, then the analytics on Azure:
+Place orders at https://orange-meadow-0c22c891e.1.azurestaticapps.net, then check the analytics:
+
+- https://order-analytics-service-midterm-heaeadakgxb8f3eh.canadacentral-01.azurewebsites.net/analytics/summary
+- https://order-analytics-service-midterm-heaeadakgxb8f3eh.canadacentral-01.azurewebsites.net/analytics/products
+- https://order-analytics-service-midterm-heaeadakgxb8f3eh.canadacentral-01.azurewebsites.net/analytics/top-products
+
+The analytics on Azure after two orders:
 
 ![summary on Azure](docs/screenshots/azure-summary.jpg)
 
