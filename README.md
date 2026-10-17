@@ -113,25 +113,148 @@ A message that is not a valid order is rejected without being put back, so it ca
 
 ## Run locally
 
-Start RabbitMQ:
+Commands are for Windows PowerShell; each service runs in its own terminal tab. Prerequisites: Docker Desktop, Git, Node.js 20+ and Python 3.12. On macOS or Linux, use the two alternatives noted below.
+
+All four repositories go in one folder:
+
+```bash
+mkdir petstore
+```
+
+```bash
+cd petstore
+```
+
+### 1. RabbitMQ (Docker)
+
+First time (creates the container; port 5672 for AMQP, 15672 for the management page):
 
 ```bash
 docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management
 ```
 
-Install dependencies:
+Later runs:
+
+```bash
+docker start rabbitmq
+```
+
+Management page: http://localhost:15672 (user `guest`, password `guest`).
+
+### 2. product-service (port 3030)
+
+```bash
+git clone https://github.com/peng2026-cloud/product-service.git
+```
+
+```bash
+cd product-service
+```
+
+```bash
+python -m venv .venv
+```
+
+Activate the virtual environment (macOS or Linux: `source .venv/bin/activate`):
+
+```bash
+.venv\Scriptsctivate
+```
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+python app.py
+```
+
+### 3. order-service (port 3000)
+
+In a new terminal tab, in the `petstore` folder:
+
+```bash
+git clone https://github.com/peng2026-cloud/order-service.git
+```
+
+```bash
+cd order-service
+```
 
 ```bash
 npm install
 ```
 
-Start the service (defaults to `amqp://localhost` and port 4000):
+```bash
+node index.js
+```
+
+It uses `amqp://localhost` by default.
+
+### 4. order-analytics-service (port 4000)
+
+In a new terminal tab, in the `petstore` folder:
+
+```bash
+git clone https://github.com/peng2026-cloud/order-analytics-service.git
+```
+
+```bash
+cd order-analytics-service
+```
+
+```bash
+npm install
+```
 
 ```bash
 npm start
 ```
 
-Then start `product-service` (3030), `order-service` (3000) and `store-front` (8080), place orders at http://localhost:8080 and check http://localhost:4000/analytics/summary.
+It uses `amqp://localhost` and port 4000 by default, and prints `Waiting for orders in order_queue` once it is connected.
+
+### 5. store-front (port 8080)
+
+In a new terminal tab, in the `petstore` folder:
+
+```bash
+git clone https://github.com/peng2026-cloud/store-front.git
+```
+
+```bash
+cd store-front
+```
+
+Point the store-front at the local APIs (macOS or Linux: `printf 'VUE_APP_ORDER_SERVICE_URL=http://localhost:3000
+VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030
+' > .env`):
+
+```bash
+"VUE_APP_ORDER_SERVICE_URL=http://localhost:3000", "VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030" | Set-Content .env
+```
+
+```bash
+npm install
+```
+
+```bash
+npm run serve
+```
+
+### 6. Test
+
+1. Open http://localhost:8080 and place a few orders.
+2. Check the analytics:
+   - http://localhost:4000/health
+   - http://localhost:4000/orders
+   - http://localhost:4000/analytics/summary
+   - http://localhost:4000/analytics/products
+   - http://localhost:4000/analytics/top-products
+3. Stop each service with Ctrl+C, then stop RabbitMQ:
+
+```bash
+docker stop rabbitmq
+```
 
 ## Azure deployment
 
