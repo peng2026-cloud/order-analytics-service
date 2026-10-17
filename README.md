@@ -1,6 +1,6 @@
 # Order Analytics Service
 
-CST8915 Midterm Project: extends the Algonquin Pet Store with a service that consumes orders from the RabbitMQ queue `order_queue` (published by `order-service`) and serves analytics over REST.
+CST8915 Midterm Project: a new service for the Algonquin Pet Store that consumes orders from the RabbitMQ queue `order_queue` and serves analytics over REST.
 
 ## Demo video
 
@@ -8,31 +8,20 @@ YouTube (unlisted): _link to be added after recording_
 
 ## 1. A brief overview of your order-analytics-service (language choice, architecture decisions)
 
-**Language:** Node.js with Express, the same stack as `order-service`. Azure App Service has a built-in Node runtime, so the service deploys from GitHub without extra setup.
+**Language:** Node.js with Express, the same stack as `order-service`, and Azure App Service has a built-in Node runtime.
 
-### Endpoints
-
-| Method | Endpoint | Returns |
-| --- | --- | --- |
-| GET | `/health` | Service status and RabbitMQ connection state |
-| GET | `/orders` | All consumed orders |
-| GET | `/analytics/summary` | Total orders, total revenue, average order value |
-| GET | `/analytics/products` | Order count and revenue per product |
-| GET | `/analytics/top-products` | Top 3 products by quantity sold |
-
-### Architecture decisions
-
-- **Separate service:** the analytics service only consumes `order_queue`, so `order-service` needed no code change.
-- **In-memory storage:** orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
-
-### 12-Factor App (I to IV)
-
-| Factor | How |
+| Endpoint | Returns |
 | --- | --- |
-| I. Codebase | This service has its own repository; each of the other services has its own too |
-| II. Dependencies | Declared in `package.json`, locked in `package-lock.json` |
-| III. Config | `RABBITMQ_CONNECTION_STRING` and `PORT` come from environment variables (`.env` locally, App settings on Azure); `.env.example` documents them |
-| IV. Backing services | RabbitMQ is attached through the connection string only: Docker on localhost or the Azure VM, with no code change |
+| `GET /health` | Service status and RabbitMQ connection state |
+| `GET /orders` | All consumed orders |
+| `GET /analytics/summary` | Total orders, total revenue, average order value |
+| `GET /analytics/products` | Order count and revenue per product |
+| `GET /analytics/top-products` | Top 3 products by quantity sold |
+
+**Architecture decisions:**
+
+- Orders are stored in memory, so the service runs as one instance with one consumer; data resets on restart.
+- 12-Factor I to IV: its own repository; dependencies in `package.json`; `RABBITMQ_CONNECTION_STRING` and `PORT` from environment variables; RabbitMQ attached through the connection string only, so the same code runs with Docker locally and with the VM on Azure.
 
 ## 2. The RabbitMQ consumer pattern you chose and why
 
@@ -44,31 +33,7 @@ YouTube (unlisted): _link to be added after recording_
 | Publish/subscribe | Each order is copied to every subscribed service. | No: only this service needs the orders. |
 | **Push (`channel.consume`)** | RabbitMQ sends each order to the service as soon as it arrives. | **Yes:** no polling, no delay. |
 
-### How it works in the code
-
-All of it is in `startConsumer()` in [index.js](index.js#L23-L70).
-
-**1. Connect, and reconnect if RabbitMQ goes away** ([lines 25 to 33](index.js#L25-L33))
-
-```js
-const connection = await amqp.connect(RABBITMQ_CONNECTION_STRING);
-connection.on('close', () => {
-  setTimeout(startConsumer, RETRY_DELAY_MS);
-});
-```
-
-The address comes from the environment, so the same code connects to Docker locally or to the VM on Azure. If the connection closes, the service tries again after 5 seconds.
-
-**2. Use the same queue as order-service, one order at a time** ([lines 38 to 41](index.js#L38-L41))
-
-```js
-await channel.assertQueue(QUEUE, { durable: true });
-await channel.prefetch(1);
-```
-
-`durable: true` must match `order-service`; a mismatch would make the declaration fail. A durable queue survives a RabbitMQ restart. `prefetch(1)` means RabbitMQ sends at most one unacknowledged order at a time, so after a failure at most one order is redelivered.
-
-**3. Let RabbitMQ push each order, and acknowledge it only after it is stored** ([lines 46 to 64](index.js#L46-L64), shortened)
+The order is acknowledged only after it is stored ([index.js](index.js#L46-L64)), so if the service stops first, RabbitMQ puts the order back in the queue and nothing is lost:
 
 ```js
 await channel.consume(QUEUE, (msg) => {
@@ -78,50 +43,17 @@ await channel.consume(QUEUE, (msg) => {
 }, { noAck: false });
 ```
 
-`channel.consume` registers a function that RabbitMQ calls for every new order, so the service never polls. With `noAck: false` (manual acknowledgement), RabbitMQ keeps the order until `channel.ack` runs; if the service stops before that, RabbitMQ requeues it, so no order is lost.
-
-**4. Reject an invalid message instead of retrying it forever** ([line 62](index.js#L62))
-
-```js
-channel.nack(msg, false, false);
-```
-
-A message that is not valid JSON, or has no product name or numeric quantity, is rejected without requeue, so it cannot be redelivered again and again. It is discarded, because no dead-letter queue is configured.
-
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
-Commands are for Windows PowerShell; each service runs in its own terminal tab. Prerequisites: Docker Desktop, Git, Node.js 20+ and Python 3.12. On macOS or Linux, use the two alternatives noted below.
+Each command runs in Windows PowerShell; each service runs in its own terminal tab, from the folder that holds the four repositories.
 
-This service needs no `.env` file locally, because both of its settings have local defaults:
-
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `RABBITMQ_CONNECTION_STRING` | `amqp://localhost` | RabbitMQ connection string |
-| `PORT` | `4000` | HTTP port; App Service sets it automatically |
-
-Clone all four repositories into the same folder, and open each new terminal tab in that folder.
-
-### Step 1: RabbitMQ (Docker)
-
-First time (creates the container; port 5672 for AMQP, 15672 for the management page):
+RabbitMQ:
 
 ```bash
 docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management
 ```
 
-Later runs:
-
-```bash
-docker start rabbitmq
-```
-
-Management page: http://localhost:15672 (user `guest`, password `guest`).
-
-### Step 2: product-service (port 3030)
-
-```bash
-git clone https://github.com/peng2026-cloud/product-service.git
-```
+product-service (port 3030):
 
 ```bash
 cd product-service
@@ -130,8 +62,6 @@ cd product-service
 ```bash
 python -m venv .venv
 ```
-
-Activate the virtual environment (macOS or Linux: `source .venv/bin/activate`):
 
 ```bash
 .venv\Scripts\activate
@@ -145,13 +75,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### Step 3: order-service (port 3000)
-
-In a new terminal tab:
-
-```bash
-git clone https://github.com/peng2026-cloud/order-service.git
-```
+order-service (port 3000):
 
 ```bash
 cd order-service
@@ -165,15 +89,7 @@ npm install
 node index.js
 ```
 
-It uses `amqp://localhost` by default.
-
-### Step 4: order-analytics-service (port 4000)
-
-In a new terminal tab:
-
-```bash
-git clone https://github.com/peng2026-cloud/order-analytics-service.git
-```
+order-analytics-service (port 4000):
 
 ```bash
 cd order-analytics-service
@@ -187,21 +103,11 @@ npm install
 npm start
 ```
 
-It uses `amqp://localhost` and port 4000 by default, and prints `Waiting for orders in order_queue` once it is connected.
-
-### Step 5: store-front (port 8080)
-
-In a new terminal tab:
-
-```bash
-git clone https://github.com/peng2026-cloud/store-front.git
-```
+store-front (port 8080):
 
 ```bash
 cd store-front
 ```
-
-Point the store-front at the local APIs (macOS or Linux: `printf 'VUE_APP_ORDER_SERVICE_URL=http://localhost:3000\nVUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030\n' > .env`):
 
 ```bash
 "VUE_APP_ORDER_SERVICE_URL=http://localhost:3000", "VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030" | Set-Content .env
@@ -215,40 +121,9 @@ npm install
 npm run serve
 ```
 
-### Step 6: Test
-
-1. Open http://localhost:8080 and place a few orders.
-2. Check the analytics:
-   - http://localhost:4000/health
-   - http://localhost:4000/orders
-   - http://localhost:4000/analytics/summary
-   - http://localhost:4000/analytics/products
-   - http://localhost:4000/analytics/top-products
-3. Stop each service with Ctrl+C, then stop RabbitMQ:
-
-```bash
-docker stop rabbitmq
-```
-
-### Local demo screenshots
-
-product-service on port 3030:
-
-![product-service running locally](docs/screenshots/local-product-service.jpg)
-
-order-service on port 3000:
-
-![order-service running locally](docs/screenshots/local-order-service.jpg)
-
-order-analytics-service on port 4000, connected to RabbitMQ:
+Place orders at http://localhost:8080, then open http://localhost:4000/analytics/summary, `/analytics/products` and `/analytics/top-products`.
 
 ![order-analytics-service waiting for orders](docs/screenshots/local-analytics-service.jpg)
-
-store-front on port 8080:
-
-![store-front running locally](docs/screenshots/local-store-front.jpg)
-
-An order placed in the local store-front:
 
 ![order placed locally](docs/screenshots/local-order-placed.jpg)
 
@@ -256,32 +131,17 @@ An order placed in the local store-front:
 
 | Component | Azure service | Region |
 | --- | --- | --- |
-| RabbitMQ | VM `rabbitmq-vm` (Ubuntu 24.04, Standard_B2ls_v2) | West US 2 |
-| order-service | Azure App Service `order-service-midterm` (Node 24 LTS) | Canada Central |
-| product-service | Azure App Service `product-service-midterm` (Python 3.12) | Canada Central |
-| order-analytics-service | Azure App Service `order-analytics-service-midterm` (Node 24 LTS) | Canada Central |
-| store-front | Static Web App `store-front-midterm` (Free) | West US 2 |
+| RabbitMQ | VM `rabbitmq-vm` | West US 2 |
+| order-service | Azure App Service `order-service-midterm` | Canada Central |
+| product-service | Azure App Service `product-service-midterm` | Canada Central |
+| order-analytics-service | Azure App Service `order-analytics-service-midterm` | Canada Central |
+| store-front | Azure Static Web Apps `store-front-midterm` | West US 2 |
 
-- The three App Services share one Free F1 Linux plan and deploy from GitHub Actions (Deployment Center, basic authentication).
-- `RABBITMQ_CONNECTION_STRING` is an App setting on `order-service-midterm` and `order-analytics-service-midterm`.
-- The VM's NSG allows port 5672 only from the App Services' possible outbound IP addresses.
-- `store-front` builds with GitHub Actions; the workflow sets `VUE_APP_ORDER_SERVICE_URL` and `VUE_APP_PRODUCT_SERVICE_URL` to the App Service URLs.
-
-### Azure demo screenshots
-
-The resource group with the RabbitMQ VM, the three App Services and the Static Web App:
+Each service deploys from its GitHub repository with GitHub Actions. `RABBITMQ_CONNECTION_STRING` is an App setting, and the VM allows port 5672 only from the App Services.
 
 ![Azure resource group](docs/screenshots/azure-resource-group.jpg)
 
-App settings of `order-analytics-service-midterm` (value hidden):
-
-![App setting](docs/screenshots/azure-app-settings.jpg)
-
-The deployed store-front (https://orange-meadow-0c22c891e.1.azurestaticapps.net):
-
-![deployed store-front](docs/screenshots/azure-store-front.jpg)
-
-Analytics on Azure after two orders (Cat Food x 2, Dog Food x 1):
+Orders placed at https://orange-meadow-0c22c891e.1.azurestaticapps.net, then the analytics on Azure:
 
 ![summary on Azure](docs/screenshots/azure-summary.jpg)
 
@@ -293,48 +153,26 @@ Analytics on Azure after two orders (Cat Food x 2, Dog Food x 1):
 
 ![Architecture diagram](docs/architecture.png)
 
-Source: [docs/architecture.drawio](docs/architecture.drawio)
-
-1. The customer opens `store-front` (Vue.js on Azure Static Web Apps). The browser calls the APIs directly; their URLs come from the `VUE_APP_` variables set in the build workflow.
-2. `GET /products` goes to `product-service`; `POST /orders` goes to `order-service`.
-3. `order-service` publishes each order as JSON to the durable queue `order_queue` on RabbitMQ (default exchange, `sendToQueue`).
-4. `order-analytics-service` consumes the queue, stores the orders in memory and serves the analytics endpoints.
-
-## FAQ
-
-**Why only one instance?**
-With two instances, each one would consume only part of the orders, so neither would have the full analytics.
-
-**What is an ack, and why ack after saving?**
-An ack tells RabbitMQ that the order is done, and RabbitMQ then deletes it from the queue. If the service acked before saving and then crashed, the order would be lost.
-
-**If the analytics service stops, are orders lost?**
-No. The orders wait in the durable queue, and the service consumes them when it starts again.
-
-**Where is the RabbitMQ password?**
-In App settings on Azure. Locally the default `guest` account is used, and any local password goes in `.env`, which Git ignores. It is never in the code or in GitHub.
+1. The customer opens `store-front` on Azure Static Web Apps.
+2. The browser gets products from `product-service` and sends each order to `order-service`.
+3. `order-service` publishes the order to the durable queue `order_queue` on the RabbitMQ VM.
+4. `order-analytics-service` consumes the queue and serves the analytics endpoints.
 
 ## Service repositories
 
 | Service | Repository |
 | --- | --- |
-| order-analytics-service | https://github.com/peng2026-cloud/order-analytics-service (this repo) |
+| order-analytics-service | https://github.com/peng2026-cloud/order-analytics-service |
 | order-service | https://github.com/peng2026-cloud/order-service |
 | product-service | https://github.com/peng2026-cloud/product-service |
 | store-front | https://github.com/peng2026-cloud/store-front |
-
-## Challenges and lessons learned
-
-- **Regions:** the Azure for Students policy allows only a few regions, and Static Web Apps defaults to East US 2, which failed validation; West US 2 works. The VM runs in West US 2 (the Standard_B2ls_v2 size used in earlier labs), and the App Services run in Canada Central because the Free F1 quota in West US 2 is 0.
-- **App Service outbound IPs:** RabbitMQ must allow every address in `possibleOutboundIpAddresses`, not only the current `outboundIpAddresses`.
-- **Free tier sleep:** F1 apps idle out, which clears the in-memory analytics, so the service is warmed up before a demo.
 
 ## Contributions
 
 | Member | Contribution |
 | --- | --- |
-| Peng Wang | Analytics service, local integration test, Azure deployment (VM, App Services, Static Web App), architecture diagram, README |
+| Peng Wang | Analytics service, local test, Azure deployment, architecture diagram, README |
 
 ## Use of AI
 
-Claude (Anthropic) was used to help write and review the service code, plan the Azure deployment steps, draw the architecture diagram, and draft this README and the video script. All code was run and tested locally and on Azure, and the results were checked by hand.
+Claude (Anthropic) was used to help write and review the code, plan the Azure deployment and draft this README. All code was run and tested locally and on Azure, and the results were checked by hand.
