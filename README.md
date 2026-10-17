@@ -40,21 +40,63 @@ I chose a **push consumer**. RabbitMQ sends each order to my service as soon as 
 
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
-RabbitMQ runs in Docker (`rabbitmq:4-management`), and each service runs in its own terminal tab.
+Each service runs in its own PowerShell tab.
+
+RabbitMQ in Docker:
+
+```bash
+docker start rabbitmq
+```
 
 product-service on port 3030:
+
+```bash
+cd $HOME\Desktop\workspace\product-service
+```
+
+```bash
+.venv\Scripts\activate
+```
+
+```bash
+python app.py
+```
 
 ![product-service running locally](docs/screenshots/local-product-service.jpg)
 
 order-service on port 3000:
 
+```bash
+cd $HOME\Desktop\workspace\order-service
+```
+
+```bash
+node index.js
+```
+
 ![order-service running locally](docs/screenshots/local-order-service.jpg)
 
 order-analytics-service on port 4000, connected to RabbitMQ:
 
+```bash
+cd $HOME\Desktop\workspace\order-analytics-service
+```
+
+```bash
+npm start
+```
+
 ![order-analytics-service waiting for orders](docs/screenshots/local-analytics-service.jpg)
 
 store-front on port 8080:
+
+```bash
+cd $HOME\Desktop\workspace\store-front
+```
+
+```bash
+npm run serve
+```
 
 ![store-front running locally](docs/screenshots/local-store-front.jpg)
 
