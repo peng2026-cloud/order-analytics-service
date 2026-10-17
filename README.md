@@ -21,7 +21,15 @@ YouTube (unlisted): _link to be added after recording_
 **Architecture decisions:**
 
 - In-memory storage. As the project requirements say: "Use one application instance and one consumer process when using in-memory storage so all orders and analytics are held in the same process." The data resets after a restart.
-- 12-Factor I to IV: its own repository; dependencies in `package.json`; `RABBITMQ_CONNECTION_STRING` and `PORT` from environment variables; RabbitMQ attached through the connection string only, so the same code runs with Docker locally and with the VM on Azure.
+
+**12-Factor App Compliance:**
+
+| Factor | Requirement | How this service does it |
+| --- | --- | --- |
+| **I. Codebase** | Own GitHub repository for the order-analytics-service | https://github.com/peng2026-cloud/order-analytics-service |
+| **II. Dependencies** | All dependencies declared in a manifest file (`package.json`, `requirements.txt`, etc.) | `package.json` |
+| **III. Config** | RabbitMQ connection string and port configured via environment variables / `.env` file | `RABBITMQ_CONNECTION_STRING` and `PORT` |
+| **IV. Backing Services** | RabbitMQ treated as an attached resource via connection string | Docker locally, the Azure VM on Azure, same code |
 
 ## 2. The RabbitMQ consumer pattern you chose and why
 
