@@ -156,6 +156,8 @@ Place orders at https://orange-meadow-0c22c891e.1.azurestaticapps.net, then chec
 | Member | Contribution |
 | --- | --- |
 | Peng Wang | Analytics service, local test, Azure deployment, architecture diagram, README |
+| Hussein Dawod | _To be added_ |
+| Justin Aroga | _To be added_ |
 
 ## Use of AI
 
