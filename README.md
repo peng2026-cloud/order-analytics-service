@@ -25,11 +25,6 @@ YouTube (unlisted): _link to be added after recording_
 | III. Config | `RABBITMQ_CONNECTION_STRING` and `PORT` come from environment variables (`.env` locally, App settings on Azure); `.env.example` documents them |
 | IV. Backing services | RabbitMQ is attached through the connection string only: Docker on localhost or the Azure VM, with no code change |
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `RABBITMQ_CONNECTION_STRING` | `amqp://localhost` | RabbitMQ connection string |
-| `PORT` | `4000` | HTTP port; App Service sets it automatically |
-
 ## RabbitMQ consumer pattern
 
 **Choice:** a push consumer. RabbitMQ sends each order to the service as soon as it arrives.
@@ -64,7 +59,7 @@ await channel.prefetch(1);
 
 `durable: true` must match `order-service`; a mismatch would make the declaration fail. A durable queue survives a RabbitMQ restart. `prefetch(1)` means RabbitMQ sends at most one unacknowledged order at a time, so after a failure at most one order is redelivered.
 
-**3. Let RabbitMQ push each order, and acknowledge it only after it is stored** ([lines 46 to 64](index.js#L46-L64))
+**3. Let RabbitMQ push each order, and acknowledge it only after it is stored** ([lines 46 to 64](index.js#L46-L64), shortened)
 
 ```js
 await channel.consume(QUEUE, (msg) => {
@@ -89,6 +84,13 @@ Orders are stored in memory, as the project requirements permit. The service the
 ## Run locally
 
 Commands are for Windows PowerShell; each service runs in its own terminal tab. Prerequisites: Docker Desktop, Git, Node.js 20+ and Python 3.12. On macOS or Linux, use the two alternatives noted below.
+
+This service needs no `.env` file locally, because both of its settings have local defaults:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `RABBITMQ_CONNECTION_STRING` | `amqp://localhost` | RabbitMQ connection string |
+| `PORT` | `4000` | HTTP port; App Service sets it automatically |
 
 All four repositories go in one folder:
 
@@ -310,7 +312,7 @@ Source: [docs/architecture.drawio](docs/architecture.drawio)
 
 ## Challenges and lessons learned
 
-- **Regions:** the Azure for Students policy allows only a few regions, and Static Web Apps defaults to East US 2, which failed validation; West US 2 works. The VM is in West US 2 because B-series v2 sizes are available there, and the App Services are in Canada Central because the F1 quota in West US 2 is 0.
+- **Regions:** the Azure for Students policy allows only a few regions, and Static Web Apps defaults to East US 2, which failed validation; West US 2 works. The VM runs in West US 2 (the Standard_B2ls_v2 size used in earlier labs), and the App Services run in Canada Central because the Free F1 quota in West US 2 is 0.
 - **App Service outbound IPs:** RabbitMQ must allow every address in `possibleOutboundIpAddresses`, not only the current `outboundIpAddresses`.
 - **Free tier sleep:** F1 apps idle out, which clears the in-memory analytics, so the service is warmed up before a demo.
 
@@ -322,4 +324,4 @@ Source: [docs/architecture.drawio](docs/architecture.drawio)
 
 ## Use of AI
 
-Claude (Anthropic) was used to help write and review the service code, draw the architecture diagram and draft this README. All code was run and tested locally and on Azure, and the results were checked by hand.
+Claude (Anthropic) was used to help write and review the service code, plan the Azure deployment steps, draw the architecture diagram, and draft this README and the video script. All code was run and tested locally and on Azure, and the results were checked by hand.
