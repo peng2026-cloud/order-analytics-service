@@ -28,15 +28,6 @@ YouTube (unlisted): _link to be added after recording_
 
 So I run one instance of this service with one consumer.
 
-**12-Factor App Compliance:**
-
-| Factor | Requirement | How this service does it |
-| --- | --- | --- |
-| **I. Codebase** | Own GitHub repository for the order-analytics-service | This service has its own repository: https://github.com/peng2026-cloud/order-analytics-service |
-| **II. Dependencies** | All dependencies declared in a manifest file (`package.json`, `requirements.txt`, etc.) | All dependencies are declared in `package.json`. |
-| **III. Config** | RabbitMQ connection string and port configured via environment variables / `.env` file | The service reads `RABBITMQ_CONNECTION_STRING` and `PORT` from environment variables: from App settings on Azure, and from `.env` locally (`.env.example` lists them). |
-| **IV. Backing Services** | RabbitMQ treated as an attached resource via connection string | The service connects to RabbitMQ only through `RABBITMQ_CONNECTION_STRING`. Locally it points to RabbitMQ in Docker, and on Azure it points to the RabbitMQ VM, with no code change. |
-
 ## 2. The RabbitMQ consumer pattern you chose and why
 
 I chose a **push consumer**. RabbitMQ sends each order to my service as soon as the order arrives in the queue.
@@ -111,6 +102,15 @@ The analytics on Azure after two orders:
 2. The browser gets products from `product-service` and sends each order to `order-service`.
 3. `order-service` publishes the order to the durable queue `order_queue` on the RabbitMQ VM.
 4. `order-analytics-service` consumes the queue and serves the analytics endpoints.
+
+## 12-Factor App Compliance
+
+| Factor | Requirement | How this service does it |
+| --- | --- | --- |
+| **I. Codebase** | Own GitHub repository for the order-analytics-service | This service has its own repository: https://github.com/peng2026-cloud/order-analytics-service |
+| **II. Dependencies** | All dependencies declared in a manifest file (`package.json`, `requirements.txt`, etc.) | All dependencies are declared in `package.json`. |
+| **III. Config** | RabbitMQ connection string and port configured via environment variables / `.env` file | The service reads `RABBITMQ_CONNECTION_STRING` and `PORT` from environment variables: from App settings on Azure, and from `.env` locally (`.env.example` lists them). |
+| **IV. Backing Services** | RabbitMQ treated as an attached resource via connection string | The service connects to RabbitMQ only through `RABBITMQ_CONNECTION_STRING`. Locally it points to RabbitMQ in Docker, and on Azure it points to the RabbitMQ VM, with no code change. |
 
 ## Service repositories
 
