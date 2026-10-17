@@ -124,14 +124,6 @@ Place orders at https://orange-meadow-0c22c891e.1.azurestaticapps.net, then chec
 - https://order-analytics-service-midterm-heaeadakgxb8f3eh.canadacentral-01.azurewebsites.net/analytics/products
 - https://order-analytics-service-midterm-heaeadakgxb8f3eh.canadacentral-01.azurewebsites.net/analytics/top-products
 
-The analytics on Azure after two orders:
-
-![summary on Azure](docs/screenshots/azure-summary.jpg)
-
-![products on Azure](docs/screenshots/azure-products.jpg)
-
-![top products on Azure](docs/screenshots/azure-top-products.jpg)
-
 ## 5. A walkthrough of your architecture diagram
 
 ![Architecture diagram](docs/architecture.png)
