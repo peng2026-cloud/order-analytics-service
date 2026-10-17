@@ -158,7 +158,7 @@ python -m venv .venv
 Activate the virtual environment (macOS or Linux: `source .venv/bin/activate`):
 
 ```bash
-.venv\Scriptsctivate
+.venv\Scripts\activate
 ```
 
 ```bash
