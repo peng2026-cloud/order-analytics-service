@@ -47,8 +47,6 @@ I chose a **push consumer**. RabbitMQ sends each order to my service as soon as 
 | Publish/subscribe | RabbitMQ would copy each order to every service that subscribes. | I did not choose it. Only my service needs the orders, so there is nothing to copy. |
 | **Push (`channel.consume`)** | RabbitMQ sends each order to my service as soon as it arrives. | **I chose it.** My service does not need to keep asking, and it gets each order right away. |
 
-My service tells RabbitMQ that an order is done (an acknowledgement) only after it has saved the order ([index.js](index.js#L46-L64)). If the service stops before that, RabbitMQ puts the order back in the queue, so no order is lost.
-
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
 RabbitMQ runs in Docker (`rabbitmq:4-management`), and each service runs in its own terminal tab.
