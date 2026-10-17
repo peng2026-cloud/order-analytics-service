@@ -33,15 +33,15 @@ YouTube (unlisted): _link to be added after recording_
 
 ## 2. The RabbitMQ consumer pattern you chose and why
 
-**Choice:** a push consumer. RabbitMQ sends each order to the service as soon as it arrives.
+I chose a **push consumer**. RabbitMQ sends each order to my service as soon as the order arrives in the queue.
 
-| Option | How it works | Chosen? |
+| Option | How it works | Why I chose it or not |
 | --- | --- | --- |
-| Pull (`channel.get`) | The service keeps asking the queue for new orders. | No: wasted requests when the queue is empty, and orders wait for the next check. |
-| Publish/subscribe | Each order is copied to every subscribed service. | No: only this service needs the orders. |
-| **Push (`channel.consume`)** | RabbitMQ sends each order to the service as soon as it arrives. | **Yes:** no polling, no delay. |
+| Pull (`channel.get`) | My service would keep asking the queue whether there is a new order. | I did not choose it. The service would keep asking even when the queue is empty, and a new order would wait until the next time the service asks. |
+| Publish/subscribe | RabbitMQ would copy each order to every service that subscribes. | I did not choose it. Only my service needs the orders, so there is nothing to copy. |
+| **Push (`channel.consume`)** | RabbitMQ sends each order to my service as soon as it arrives. | **I chose it.** My service does not need to keep asking, and it gets each order right away. |
 
-The order is acknowledged only after it is stored ([index.js](index.js#L46-L64)), so if the service stops first, RabbitMQ puts the order back in the queue and nothing is lost.
+My service tells RabbitMQ that an order is done (an acknowledgement) only after it has saved the order ([index.js](index.js#L46-L64)). If the service stops before that, RabbitMQ puts the order back in the queue, so no order is lost.
 
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
