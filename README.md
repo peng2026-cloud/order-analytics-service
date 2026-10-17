@@ -32,13 +32,13 @@ YouTube (unlisted): _link to be added after recording_
 
 ## RabbitMQ consumer pattern
 
-**Choice:** a work queue (point-to-point) with one push-based consumer.
+**Choice:** a push consumer. RabbitMQ sends each order to the service as soon as it arrives.
 
-| Option | Why not chosen / why chosen |
-| --- | --- |
-| Pull (`channel.get` in a loop) | Polls even when the queue is empty and adds delay between an order and the analytics. |
-| Publish/subscribe (fanout exchange) | Needed only when several services must each receive every order; `order-service` publishes to one queue through the default exchange, and this is the only consumer. |
-| **Push consumer on `order_queue` (chosen)** | RabbitMQ delivers each order as soon as it is published, with no polling, and the queue settings match `order-service` exactly. |
+| Option | How it works | Chosen? |
+| --- | --- | --- |
+| Pull (`channel.get`) | The service keeps asking the queue for new orders. | No: wasted requests when the queue is empty, and orders wait for the next check. |
+| Publish/subscribe | Each order is copied to every subscribed service. | No: only this service needs the orders. |
+| **Push (`channel.consume`)** | RabbitMQ sends each order to the service as soon as it arrives. | **Yes:** no polling, no delay. |
 
 ### How it works in the code
 
