@@ -92,15 +92,7 @@ This service needs no `.env` file locally, because both of its settings have loc
 | `RABBITMQ_CONNECTION_STRING` | `amqp://localhost` | RabbitMQ connection string |
 | `PORT` | `4000` | HTTP port; App Service sets it automatically |
 
-All four repositories go in one folder:
-
-```bash
-mkdir petstore
-```
-
-```bash
-cd petstore
-```
+Clone all four repositories into the same folder, and open each new terminal tab in that folder.
 
 ### 1. RabbitMQ (Docker)
 
@@ -148,7 +140,7 @@ python app.py
 
 ### 3. order-service (port 3000)
 
-In a new terminal tab, in the `petstore` folder:
+In a new terminal tab:
 
 ```bash
 git clone https://github.com/peng2026-cloud/order-service.git
@@ -170,7 +162,7 @@ It uses `amqp://localhost` by default.
 
 ### 4. order-analytics-service (port 4000)
 
-In a new terminal tab, in the `petstore` folder:
+In a new terminal tab:
 
 ```bash
 git clone https://github.com/peng2026-cloud/order-analytics-service.git
@@ -192,7 +184,7 @@ It uses `amqp://localhost` and port 4000 by default, and prints `Waiting for ord
 
 ### 5. store-front (port 8080)
 
-In a new terminal tab, in the `petstore` folder:
+In a new terminal tab:
 
 ```bash
 git clone https://github.com/peng2026-cloud/store-front.git
