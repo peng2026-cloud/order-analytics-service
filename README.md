@@ -53,6 +53,50 @@ Source: [docs/architecture.drawio](docs/architecture.drawio)
 
 Orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
 
+### How the consumer works in the code
+
+All of it is in `startConsumer()` in [index.js](index.js#L21-L72).
+
+**1. Connect, and reconnect if RabbitMQ goes away** ([lines 25 to 33](index.js#L25-L33))
+
+```js
+const connection = await amqp.connect(RABBITMQ_CONNECTION_STRING);
+connection.on('close', () => {
+  setTimeout(startConsumer, RETRY_DELAY_MS);
+});
+```
+
+The address comes from the environment, so the same code connects to Docker locally or to the VM on Azure. If the connection closes, the service tries again after 5 seconds.
+
+**2. Use the same queue as order-service, one order at a time** ([lines 38 to 41](index.js#L38-L41))
+
+```js
+await channel.assertQueue(QUEUE, { durable: true });
+await channel.prefetch(1);
+```
+
+`durable: true` must match `order-service`, so the queue survives a RabbitMQ restart. `prefetch(1)` means RabbitMQ hands over one order and waits for this service to finish it before sending the next.
+
+**3. Let RabbitMQ push each order, and confirm it only after it is saved** ([lines 46 to 64](index.js#L46-L64))
+
+```js
+await channel.consume(QUEUE, (msg) => {
+  const order = JSON.parse(msg.content.toString());
+  orders.push({ ...order, receivedAt: new Date().toISOString() });
+  channel.ack(msg);
+}, { noAck: false });
+```
+
+`channel.consume` registers a function that RabbitMQ calls for every new order, so the service never has to poll. With `noAck: false`, RabbitMQ keeps the order until `channel.ack` runs; if the service stops before that, the order goes back to the queue.
+
+**4. Drop a broken message instead of retrying it forever** ([line 62](index.js#L62))
+
+```js
+channel.nack(msg, false, false);
+```
+
+A message that is not a valid order is rejected without being put back, so it cannot block the queue.
+
 ## 12-Factor App (I to IV)
 
 | Factor | How |
