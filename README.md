@@ -87,8 +87,6 @@ An order placed locally:
 | order-analytics-service | Azure App Service `order-analytics-service-midterm` | Canada Central |
 | store-front | Azure Static Web Apps `store-front-midterm` | West US 2 |
 
-Each service deploys from its GitHub repository with GitHub Actions. `RABBITMQ_CONNECTION_STRING` is an App setting, and the VM allows port 5672 only from the App Services.
-
 ![Azure resource group](docs/screenshots/azure-resource-group.jpg)
 
 Place orders at https://orange-meadow-0c22c891e.1.azurestaticapps.net, then check the analytics:
