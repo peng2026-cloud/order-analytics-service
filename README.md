@@ -6,26 +6,6 @@ CST8915 Midterm Project: extends the Algonquin Pet Store with a service that con
 
 YouTube (unlisted): _link to be added after recording_
 
-## Architecture
-
-![Architecture diagram](docs/architecture.png)
-
-Source: [docs/architecture.drawio](docs/architecture.drawio)
-
-1. The customer opens `store-front` (Vue.js on Azure Static Web Apps). The browser calls the APIs directly; their URLs come from the `VUE_APP_` variables set in the build workflow.
-2. `GET /products` goes to `product-service`; `POST /orders` goes to `order-service`.
-3. `order-service` publishes each order as JSON to the durable queue `order_queue` on RabbitMQ (default exchange, `sendToQueue`).
-4. `order-analytics-service` consumes the queue, stores the orders in memory and serves the analytics endpoints.
-
-## Service repositories
-
-| Service | Repository |
-| --- | --- |
-| order-analytics-service | https://github.com/peng2026-cloud/order-analytics-service (this repo) |
-| order-service | https://github.com/peng2026-cloud/order-service |
-| product-service | https://github.com/peng2026-cloud/product-service |
-| store-front | https://github.com/peng2026-cloud/store-front |
-
 ## Endpoints
 
 | Method | Endpoint | Returns |
@@ -35,6 +15,20 @@ Source: [docs/architecture.drawio](docs/architecture.drawio)
 | GET | `/analytics/summary` | Total orders, total revenue, average order value |
 | GET | `/analytics/products` | Order count and revenue per product |
 | GET | `/analytics/top-products` | Top 3 products by quantity sold |
+
+## 12-Factor App (I to IV)
+
+| Factor | How |
+| --- | --- |
+| I. Codebase | This service has its own repository; each of the other services has its own too |
+| II. Dependencies | Declared in `package.json`, locked in `package-lock.json` |
+| III. Config | `RABBITMQ_CONNECTION_STRING` and `PORT` come from environment variables (`.env` locally, App settings on Azure); `.env.example` documents them |
+| IV. Backing services | RabbitMQ is attached through the connection string only: Docker on localhost or the Azure VM, with no code change |
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `RABBITMQ_CONNECTION_STRING` | `amqp://localhost` | RabbitMQ connection string |
+| `PORT` | `4000` | HTTP port; App Service sets it automatically |
 
 ## RabbitMQ consumer pattern
 
@@ -96,20 +90,6 @@ channel.nack(msg, false, false);
 ```
 
 A message that is not a valid order is rejected without being put back, so it cannot block the queue.
-
-## 12-Factor App (I to IV)
-
-| Factor | How |
-| --- | --- |
-| I. Codebase | This service has its own repository; each of the other services has its own too |
-| II. Dependencies | Declared in `package.json`, locked in `package-lock.json` |
-| III. Config | `RABBITMQ_CONNECTION_STRING` and `PORT` come from environment variables (`.env` locally, App settings on Azure); `.env.example` documents them |
-| IV. Backing services | RabbitMQ is attached through the connection string only: Docker on localhost or the Azure VM, with no code change |
-
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `RABBITMQ_CONNECTION_STRING` | `amqp://localhost` | RabbitMQ connection string |
-| `PORT` | `4000` | HTTP port; App Service sets it automatically |
 
 ## Run locally
 
@@ -268,6 +248,26 @@ docker stop rabbitmq
 - `RABBITMQ_CONNECTION_STRING` is an App setting on `order-service-midterm` and `order-analytics-service-midterm`.
 - The VM's NSG allows port 5672 only from the App Services' possible outbound IP addresses.
 - `store-front` builds with GitHub Actions; the workflow sets `VUE_APP_ORDER_SERVICE_URL` and `VUE_APP_PRODUCT_SERVICE_URL` to the App Service URLs.
+
+## Architecture
+
+![Architecture diagram](docs/architecture.png)
+
+Source: [docs/architecture.drawio](docs/architecture.drawio)
+
+1. The customer opens `store-front` (Vue.js on Azure Static Web Apps). The browser calls the APIs directly; their URLs come from the `VUE_APP_` variables set in the build workflow.
+2. `GET /products` goes to `product-service`; `POST /orders` goes to `order-service`.
+3. `order-service` publishes each order as JSON to the durable queue `order_queue` on RabbitMQ (default exchange, `sendToQueue`).
+4. `order-analytics-service` consumes the queue, stores the orders in memory and serves the analytics endpoints.
+
+## Service repositories
+
+| Service | Repository |
+| --- | --- |
+| order-analytics-service | https://github.com/peng2026-cloud/order-analytics-service (this repo) |
+| order-service | https://github.com/peng2026-cloud/order-service |
+| product-service | https://github.com/peng2026-cloud/product-service |
+| store-front | https://github.com/peng2026-cloud/store-front |
 
 ## Challenges and lessons learned
 
