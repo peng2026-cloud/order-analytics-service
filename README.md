@@ -356,7 +356,7 @@ No. The VM's network security group allows it only from the App Services' outbou
 App Service can use any of its possible outbound IP addresses, so all of them must be allowed; allowing only some of them caused connection timeouts.
 
 **Where is the RabbitMQ password?**
-In App settings on Azure and in `.env` locally. It is never in the code or in GitHub.
+In App settings on Azure. Locally the default `guest` account is used, and any local password goes in `.env`, which Git ignores. It is never in the code or in GitHub.
 
 **Why is the first request slow?**
 The free tier sleeps when it is idle, so the service is warmed up before a demo.
