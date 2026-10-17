@@ -32,10 +32,10 @@ So I run one instance of this service with one consumer.
 
 | Factor | Requirement | How this service does it |
 | --- | --- | --- |
-| **I. Codebase** | Own GitHub repository for the order-analytics-service | https://github.com/peng2026-cloud/order-analytics-service |
-| **II. Dependencies** | All dependencies declared in a manifest file (`package.json`, `requirements.txt`, etc.) | `package.json` |
-| **III. Config** | RabbitMQ connection string and port configured via environment variables / `.env` file | `RABBITMQ_CONNECTION_STRING` and `PORT` |
-| **IV. Backing Services** | RabbitMQ treated as an attached resource via connection string | Docker locally, the Azure VM on Azure, same code |
+| **I. Codebase** | Own GitHub repository for the order-analytics-service | This service has its own repository: https://github.com/peng2026-cloud/order-analytics-service |
+| **II. Dependencies** | All dependencies declared in a manifest file (`package.json`, `requirements.txt`, etc.) | All dependencies are declared in `package.json`. |
+| **III. Config** | RabbitMQ connection string and port configured via environment variables / `.env` file | The service reads `RABBITMQ_CONNECTION_STRING` and `PORT` from environment variables: from App settings on Azure, and from `.env` locally (`.env.example` lists them). |
+| **IV. Backing Services** | RabbitMQ treated as an attached resource via connection string | The service connects to RabbitMQ only through `RABBITMQ_CONNECTION_STRING`. Locally it points to RabbitMQ in Docker, and on Azure it points to the RabbitMQ VM, with no code change. |
 
 ## 2. The RabbitMQ consumer pattern you chose and why
 
