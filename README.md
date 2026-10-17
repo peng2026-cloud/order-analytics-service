@@ -38,15 +38,20 @@ Source: [docs/architecture.drawio](docs/architecture.drawio)
 
 ## RabbitMQ consumer pattern
 
-Push-based consumer (`channel.consume`) with manual acknowledgements and `prefetch(1)`:
+**Choice:** a work queue (point-to-point) with one push-based consumer (`channel.consume`), manual acknowledgements and `prefetch(1)`.
 
-- **Push, not polling:** RabbitMQ delivers each order as soon as it arrives, so analytics stay current without repeated `basic.get` calls.
-- **Manual ack after storing:** an order is acknowledged only after it is saved in memory, so a crash before that point leaves it in the queue.
-- **prefetch(1):** at most one unacknowledged message at a time, which is enough for this load and keeps processing in order.
-- **Malformed messages** are rejected without requeue so one bad message cannot loop forever.
-- The queue is declared `durable: true` to match `order-service`. If RabbitMQ is down or restarts, the service retries every 5 seconds.
+| Option | Why not chosen / why chosen |
+| --- | --- |
+| Pull (`channel.get` in a loop) | Polls even when the queue is empty and adds delay between an order and the analytics. |
+| Publish/subscribe (fanout exchange) | Needed only when several services must each receive every order; `order-service` publishes to one queue through the default exchange, and this is the only consumer. |
+| **Push consumer on `order_queue` (chosen)** | RabbitMQ delivers each order as soon as it is published, with no polling, and the queue settings match `order-service` exactly. |
 
-Storage is in memory (allowed by the handout): one instance and one consumer; data resets on restart.
+- **Manual acknowledgement:** an order is acknowledged only after it is stored. If the service stops before that, RabbitMQ requeues the unacknowledged message, so no order is lost.
+- **`prefetch(1)`:** RabbitMQ sends at most one unacknowledged message at a time, which limits the messages that would be redelivered after a failure and is sufficient for this load.
+- **Invalid messages:** a message that is not valid JSON or lacks a product name or numeric quantity is rejected without requeue, so it cannot be redelivered indefinitely. It is discarded because no dead-letter queue is configured.
+- **Queue declaration:** `durable: true`, the same as `order-service`; a mismatch would make the declaration fail. If the connection to RabbitMQ closes, the service reconnects every 5 seconds.
+
+Orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
 
 ## 12-Factor App (I to IV)
 
