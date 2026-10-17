@@ -55,7 +55,7 @@ Orders are stored in memory, as the project requirements permit. The service the
 
 ### How the consumer works in the code
 
-All of it is in `startConsumer()` in [index.js](index.js#L21-L72).
+All of it is in `startConsumer()` in [index.js](index.js#L23-L70).
 
 **1. Connect, and reconnect if RabbitMQ goes away** ([lines 25 to 33](index.js#L25-L33))
 
