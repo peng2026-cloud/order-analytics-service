@@ -37,85 +37,25 @@ The order is acknowledged only after it is stored ([index.js](index.js#L46-L64))
 
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
-Each command runs in Windows PowerShell; each service runs in its own terminal tab, from the folder that holds the four repositories.
+RabbitMQ runs in Docker (`rabbitmq:4-management`), and each service runs in its own terminal tab.
 
-RabbitMQ:
+product-service on port 3030:
 
-```bash
-docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management
-```
+![product-service running locally](docs/screenshots/local-product-service.jpg)
 
-product-service (port 3030):
+order-service on port 3000:
 
-```bash
-cd product-service
-```
+![order-service running locally](docs/screenshots/local-order-service.jpg)
 
-```bash
-python -m venv .venv
-```
-
-```bash
-.venv\Scripts\activate
-```
-
-```bash
-pip install -r requirements.txt
-```
-
-```bash
-python app.py
-```
-
-order-service (port 3000):
-
-```bash
-cd order-service
-```
-
-```bash
-npm install
-```
-
-```bash
-node index.js
-```
-
-order-analytics-service (port 4000):
-
-```bash
-cd order-analytics-service
-```
-
-```bash
-npm install
-```
-
-```bash
-npm start
-```
-
-store-front (port 8080):
-
-```bash
-cd store-front
-```
-
-```bash
-"VUE_APP_ORDER_SERVICE_URL=http://localhost:3000", "VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3030" | Set-Content .env
-```
-
-```bash
-npm install
-```
-
-```bash
-npm run serve
-```
-
-Place orders at http://localhost:8080, then open http://localhost:4000/analytics/summary, `/analytics/products` and `/analytics/top-products`.
+order-analytics-service on port 4000, connected to RabbitMQ:
 
 ![order-analytics-service waiting for orders](docs/screenshots/local-analytics-service.jpg)
+
+store-front on port 8080:
+
+![store-front running locally](docs/screenshots/local-store-front.jpg)
+
+An order placed at http://localhost:8080; the analytics are then at http://localhost:4000/analytics/summary, `/analytics/products` and `/analytics/top-products`:
 
 ![order placed locally](docs/screenshots/local-order-placed.jpg)
 
