@@ -33,15 +33,7 @@ YouTube (unlisted): _link to be added after recording_
 | Publish/subscribe | Each order is copied to every subscribed service. | No: only this service needs the orders. |
 | **Push (`channel.consume`)** | RabbitMQ sends each order to the service as soon as it arrives. | **Yes:** no polling, no delay. |
 
-The order is acknowledged only after it is stored ([index.js](index.js#L46-L64)), so if the service stops first, RabbitMQ puts the order back in the queue and nothing is lost:
-
-```js
-await channel.consume(QUEUE, (msg) => {
-  const order = JSON.parse(msg.content.toString());
-  orders.push({ ...order, receivedAt: new Date().toISOString() });
-  channel.ack(msg);
-}, { noAck: false });
-```
+The order is acknowledged only after it is stored ([index.js](index.js#L46-L64)), so if the service stops first, RabbitMQ puts the order back in the queue and nothing is lost.
 
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
