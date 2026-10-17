@@ -55,7 +55,13 @@ store-front on port 8080:
 
 ![store-front running locally](docs/screenshots/local-store-front.jpg)
 
-An order placed at http://localhost:8080; the analytics are then at http://localhost:4000/analytics/summary, `/analytics/products` and `/analytics/top-products`:
+Place orders at http://localhost:8080, then check the analytics:
+
+- http://localhost:4000/analytics/summary
+- http://localhost:4000/analytics/products
+- http://localhost:4000/analytics/top-products
+
+An order placed locally:
 
 ![order placed locally](docs/screenshots/local-order-placed.jpg)
 
