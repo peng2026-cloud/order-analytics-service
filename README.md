@@ -6,7 +6,7 @@ CST8915 Midterm Project: extends the Algonquin Pet Store with a service that con
 
 YouTube (unlisted): _link to be added after recording_
 
-## 1. Overview: language choice and architecture decisions
+## 1. A brief overview of your order-analytics-service (language choice, architecture decisions)
 
 **Language:** Node.js with Express, the same stack as `order-service`. App Service has a built-in Node runtime, so the service deploys from GitHub without extra setup.
 
@@ -34,7 +34,7 @@ YouTube (unlisted): _link to be added after recording_
 | III. Config | `RABBITMQ_CONNECTION_STRING` and `PORT` come from environment variables (`.env` locally, App settings on Azure); `.env.example` documents them |
 | IV. Backing services | RabbitMQ is attached through the connection string only: Docker on localhost or the Azure VM, with no code change |
 
-## 2. RabbitMQ consumer pattern and why
+## 2. The RabbitMQ consumer pattern you chose and why
 
 **Choice:** a push consumer. RabbitMQ sends each order to the service as soon as it arrives.
 
@@ -88,7 +88,7 @@ channel.nack(msg, false, false);
 
 A message that is not valid JSON, or has no product name or numeric quantity, is rejected without requeue, so it cannot be redelivered again and again. It is discarded, because no dead-letter queue is configured.
 
-## 3. Local demo
+## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
 Commands are for Windows PowerShell; each service runs in its own terminal tab. Prerequisites: Docker Desktop, Git, Node.js 20+ and Python 3.12. On macOS or Linux, use the two alternatives noted below.
 
@@ -252,7 +252,7 @@ An order placed in the local store-front:
 
 ![order placed locally](docs/screenshots/local-order-placed.jpg)
 
-## 4. Azure demo
+## 4. A live demo of the application running on Azure: show all deployed services, place orders, and verify analytics
 
 | Component | Azure service | Region |
 | --- | --- | --- |
@@ -289,7 +289,7 @@ Analytics on Azure after two orders (Cat Food x 2, Dog Food x 1):
 
 ![top products on Azure](docs/screenshots/azure-top-products.jpg)
 
-## 5. Architecture diagram
+## 5. A walkthrough of your architecture diagram
 
 ![Architecture diagram](docs/architecture.png)
 
