@@ -300,6 +300,75 @@ Source: [docs/architecture.drawio](docs/architecture.drawio)
 3. `order-service` publishes each order as JSON to the durable queue `order_queue` on RabbitMQ (default exchange, `sendToQueue`).
 4. `order-analytics-service` consumes the queue, stores the orders in memory and serves the analytics endpoints.
 
+## FAQ
+
+### Overview
+
+**Why Node.js?**
+It is the same stack as `order-service`, and App Service has a built-in Node runtime.
+
+**Why keep the data in memory? What happens on a restart?**
+The project requirements allow in-memory storage. The data resets on restart, so the service runs as one instance.
+
+**Why only one instance?**
+With two instances, each one would consume only part of the orders, so neither would have the full analytics.
+
+**How does the service meet 12-Factor III and IV?**
+The RabbitMQ address comes from an environment variable, so the service switches from Docker to the Azure VM without any code change.
+
+### Consumer pattern
+
+**Why not pull?**
+Pull keeps asking even when the queue is empty, and an order waits until the next check.
+
+**Why not publish/subscribe?**
+Only this service needs the orders, so there is nothing to copy to other services.
+
+**What is an ack, and why ack after saving?**
+An ack tells RabbitMQ that the order is done, and RabbitMQ then deletes it from the queue. If the service acked before saving and then crashed, the order would be lost.
+
+**What does `prefetch(1)` do?**
+RabbitMQ sends at most one unacknowledged order at a time.
+
+**What does `durable` mean, and why must it match `order-service`?**
+A durable queue survives a RabbitMQ restart. If the two services declare the queue with different settings, the declaration fails.
+
+**What happens to an invalid message?**
+It is rejected without requeue, so it cannot loop forever.
+
+### Local demo
+
+**If the analytics service stops, are orders lost?**
+No. The orders wait in the durable queue, and the service consumes them when it starts again.
+
+**What if RabbitMQ restarts?**
+The service reconnects every 5 seconds.
+
+### Azure demo
+
+**Why are the VM and the App Services in different regions?**
+The Azure for Students subscription limits regions and quotas: the free App Service tier works in Canada Central, and the VM size from earlier labs runs in West US 2.
+
+**Is port 5672 open to everyone?**
+No. The VM's network security group allows it only from the App Services' outbound IP addresses.
+
+**Why allow 31 IP addresses?**
+App Service can use any of its possible outbound IP addresses, so all of them must be allowed; allowing only some of them caused connection timeouts.
+
+**Where is the RabbitMQ password?**
+In App settings on Azure and in `.env` locally. It is never in the code or in GitHub.
+
+**Why is the first request slow?**
+The free tier sleeps when it is idle, so the service is warmed up before a demo.
+
+### Architecture
+
+**Does the browser call the backend directly?**
+Yes. The store-front is static files, so the browser calls `product-service` and `order-service` directly.
+
+**How is the code deployed?**
+Each repository has a GitHub Actions workflow that deploys on every push to `main`.
+
 ## Service repositories
 
 | Service | Repository |
