@@ -229,6 +229,28 @@ npm run serve
 docker stop rabbitmq
 ```
 
+### Local test screenshots
+
+product-service on port 3030:
+
+![product-service running locally](docs/screenshots/local-product-service.jpg)
+
+order-service on port 3000:
+
+![order-service running locally](docs/screenshots/local-order-service.jpg)
+
+order-analytics-service on port 4000, connected to RabbitMQ:
+
+![order-analytics-service waiting for orders](docs/screenshots/local-analytics-service.jpg)
+
+store-front on port 8080:
+
+![store-front running locally](docs/screenshots/local-store-front.jpg)
+
+An order placed in the local store-front:
+
+![order placed locally](docs/screenshots/local-order-placed.jpg)
+
 ## Azure deployment
 
 | Component | Azure service | Region |
@@ -243,6 +265,28 @@ docker stop rabbitmq
 - `RABBITMQ_CONNECTION_STRING` is an App setting on `order-service-midterm` and `order-analytics-service-midterm`.
 - The VM's NSG allows port 5672 only from the App Services' possible outbound IP addresses.
 - `store-front` builds with GitHub Actions; the workflow sets `VUE_APP_ORDER_SERVICE_URL` and `VUE_APP_PRODUCT_SERVICE_URL` to the App Service URLs.
+
+### Azure screenshots
+
+The resource group with the RabbitMQ VM, the three App Services and the Static Web App:
+
+![Azure resource group](docs/screenshots/azure-resource-group.jpg)
+
+`RABBITMQ_CONNECTION_STRING` is an App setting, not code (value hidden):
+
+![App setting](docs/screenshots/azure-app-settings.jpg)
+
+The deployed store-front (https://orange-meadow-0c22c891e.1.azurestaticapps.net):
+
+![deployed store-front](docs/screenshots/azure-store-front.jpg)
+
+Analytics on Azure after two orders (Cat Food x 2, Dog Food x 1):
+
+![summary on Azure](docs/screenshots/azure-summary.jpg)
+
+![products on Azure](docs/screenshots/azure-products.jpg)
+
+![top products on Azure](docs/screenshots/azure-top-products.jpg)
 
 ## Architecture
 
