@@ -8,7 +8,7 @@ YouTube (unlisted): _link to be added after recording_
 
 ## 1. A brief overview of your order-analytics-service (language choice, architecture decisions)
 
-**Language:** Node.js with Express, the same stack as `order-service`. App Service has a built-in Node runtime, so the service deploys from GitHub without extra setup.
+**Language:** Node.js with Express, the same stack as `order-service`. Azure App Service has a built-in Node runtime, so the service deploys from GitHub without extra setup.
 
 ### Endpoints
 
@@ -257,9 +257,9 @@ An order placed in the local store-front:
 | Component | Azure service | Region |
 | --- | --- | --- |
 | RabbitMQ | VM `rabbitmq-vm` (Ubuntu 24.04, Standard_B2ls_v2) | West US 2 |
-| order-service | App Service `order-service-midterm` (Node 24 LTS) | Canada Central |
-| product-service | App Service `product-service-midterm` (Python 3.12) | Canada Central |
-| order-analytics-service | App Service `order-analytics-service-midterm` (Node 24 LTS) | Canada Central |
+| order-service | Azure App Service `order-service-midterm` (Node 24 LTS) | Canada Central |
+| product-service | Azure App Service `product-service-midterm` (Python 3.12) | Canada Central |
+| order-analytics-service | Azure App Service `order-analytics-service-midterm` (Node 24 LTS) | Canada Central |
 | store-front | Static Web App `store-front-midterm` (Free) | West US 2 |
 
 - The three App Services share one Free F1 Linux plan and deploy from GitHub Actions (Deployment Center, basic authentication).
