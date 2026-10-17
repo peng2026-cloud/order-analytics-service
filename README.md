@@ -32,7 +32,7 @@ YouTube (unlisted): _link to be added after recording_
 
 ## RabbitMQ consumer pattern
 
-**Choice:** a work queue (point-to-point) with one push-based consumer (`channel.consume`), manual acknowledgements and `prefetch(1)`.
+**Choice:** a work queue (point-to-point) with one push-based consumer.
 
 | Option | Why not chosen / why chosen |
 | --- | --- |
@@ -40,14 +40,7 @@ YouTube (unlisted): _link to be added after recording_
 | Publish/subscribe (fanout exchange) | Needed only when several services must each receive every order; `order-service` publishes to one queue through the default exchange, and this is the only consumer. |
 | **Push consumer on `order_queue` (chosen)** | RabbitMQ delivers each order as soon as it is published, with no polling, and the queue settings match `order-service` exactly. |
 
-- **Manual acknowledgement:** an order is acknowledged only after it is stored. If the service stops before that, RabbitMQ requeues the unacknowledged message, so no order is lost.
-- **`prefetch(1)`:** RabbitMQ sends at most one unacknowledged message at a time, which limits the messages that would be redelivered after a failure and is sufficient for this load.
-- **Invalid messages:** a message that is not valid JSON or lacks a product name or numeric quantity is rejected without requeue, so it cannot be redelivered indefinitely. It is discarded because no dead-letter queue is configured.
-- **Queue declaration:** `durable: true`, the same as `order-service`; a mismatch would make the declaration fail. If the connection to RabbitMQ closes, the service reconnects every 5 seconds.
-
-Orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
-
-### How the consumer works in the code
+### How it works in the code
 
 All of it is in `startConsumer()` in [index.js](index.js#L23-L70).
 
@@ -69,9 +62,9 @@ await channel.assertQueue(QUEUE, { durable: true });
 await channel.prefetch(1);
 ```
 
-`durable: true` must match `order-service`, so the queue survives a RabbitMQ restart. `prefetch(1)` means RabbitMQ hands over one order and waits for this service to finish it before sending the next.
+`durable: true` must match `order-service`; a mismatch would make the declaration fail. A durable queue survives a RabbitMQ restart. `prefetch(1)` means RabbitMQ sends at most one unacknowledged order at a time, so after a failure at most one order is redelivered.
 
-**3. Let RabbitMQ push each order, and confirm it only after it is saved** ([lines 46 to 64](index.js#L46-L64))
+**3. Let RabbitMQ push each order, and acknowledge it only after it is stored** ([lines 46 to 64](index.js#L46-L64))
 
 ```js
 await channel.consume(QUEUE, (msg) => {
@@ -81,15 +74,17 @@ await channel.consume(QUEUE, (msg) => {
 }, { noAck: false });
 ```
 
-`channel.consume` registers a function that RabbitMQ calls for every new order, so the service never has to poll. With `noAck: false`, RabbitMQ keeps the order until `channel.ack` runs; if the service stops before that, the order goes back to the queue.
+`channel.consume` registers a function that RabbitMQ calls for every new order, so the service never polls. With `noAck: false` (manual acknowledgement), RabbitMQ keeps the order until `channel.ack` runs; if the service stops before that, RabbitMQ requeues it, so no order is lost.
 
-**4. Drop a broken message instead of retrying it forever** ([line 62](index.js#L62))
+**4. Reject an invalid message instead of retrying it forever** ([line 62](index.js#L62))
 
 ```js
 channel.nack(msg, false, false);
 ```
 
-A message that is not a valid order is rejected without being put back, so it cannot block the queue.
+A message that is not valid JSON, or has no product name or numeric quantity, is rejected without requeue, so it cannot be redelivered again and again. It is discarded, because no dead-letter queue is configured.
+
+Orders are stored in memory, as the project requirements permit. The service therefore runs as one instance with one consumer, and its data resets on restart.
 
 ## Run locally
 
