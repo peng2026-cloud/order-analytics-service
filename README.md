@@ -18,15 +18,11 @@ YouTube (unlisted): _link to be added after recording_
 | `GET /analytics/products` | Order count and revenue per product |
 | `GET /analytics/top-products` | Top 3 products by quantity sold |
 
-**Architecture decisions:**
-
-**In-memory storage:** this service keeps orders in memory. The project requirements (Storage and Restart Expectations) say:
+**Architecture decision: in-memory storage.** I keep the orders in the memory of the service and do not use a database. Because of that, the service runs as one instance with one consumer, and its data resets after a restart. The project requirements say:
 
 > **In-memory storage is acceptable.** When using in-memory storage, `/orders` and the analytics endpoints cover orders processed since the service last started, and their data resets after a restart. Persistence across restarts is not required.
 >
 > Use **one application instance and one consumer process** when using in-memory storage so all orders and analytics are held in the same process. Once messages are acknowledged, they are removed from RabbitMQ and cannot be replayed from the queue to rebuild lost in-memory data.
-
-So I run one instance of this service with one consumer.
 
 ## 2. The RabbitMQ consumer pattern you chose and why
 
