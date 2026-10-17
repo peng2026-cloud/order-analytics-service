@@ -30,9 +30,9 @@ I chose a **push consumer**. RabbitMQ sends each order to my service as soon as 
 
 | Option | How it works | Why I chose it or not |
 | --- | --- | --- |
-| Pull (`channel.get`) | My service would keep asking the queue whether there is a new order. | I did not choose it. The service would keep asking even when the queue is empty, and a new order would wait until the next time the service asks. |
+| Pull | My service would keep asking the queue whether there is a new order. | I did not choose it. The service would keep asking even when the queue is empty, and a new order would wait until the next time the service asks. |
 | Publish/subscribe | RabbitMQ would copy each order to every service that subscribes. | I did not choose it. Only my service needs the orders, so there is nothing to copy. |
-| **Push (`channel.consume`)** | RabbitMQ sends each order to my service as soon as it arrives. | **I chose it.** My service does not need to keep asking, and it gets each order right away. |
+| **Push** | RabbitMQ sends each order to my service as soon as it arrives. | **I chose it.** My service does not need to keep asking, and it gets each order right away. |
 
 ## 3. A live demo of the application running locally: place orders, then show analytics endpoints
 
